@@ -20,7 +20,8 @@ uvicorn payments.server:app --reload --port 8089
 ## Configuration
 - `UNISON_PAYMENTS_PROVIDER` (default `mock`)
 - `UNISON_REQUIRE_PAYMENT_APPROVAL` (default `true`)
-- `UNISON_CONTEXT_BASE_URL`, `UNISON_STORAGE_BASE_URL` (planned) for wiring real clients.
+- `UNISON_AUTH_SECRET`, `UNISON_AUTH_ISSUER`, `UNISON_AUTH_AUDIENCE` (required for auth on endpoints)
+- `UNISON_CONTEXT_HOST`/`UNISON_CONTEXT_PORT` and `UNISON_STORAGE_HOST`/`UNISON_STORAGE_PORT` for wiring real clients.
 
 ## Tests
 
