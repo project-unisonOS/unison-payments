@@ -5,13 +5,14 @@ import uuid
 import logging
 from typing import Dict, Any
 
-from fastapi import APIRouter, Body, HTTPException, Request
+from fastapi import APIRouter, Body, HTTPException, Request, Depends
 from pydantic import BaseModel, Field
 
 from .models import PaymentInstrument, PaymentTransactionRequest
 from .providers import MockPaymentProvider, PaymentProvider
 from .service import PaymentService
 from .logging import PaymentEventLogger
+from .auth import auth_dependency
 
 _logger = logging.getLogger(__name__)
 
@@ -60,7 +61,10 @@ def register_payment_routes(app, *, context_client=None, storage_client=None) ->
     )
 
     @api.post("/payments/instruments")
-    def register_instrument(payload: PaymentInstrumentPayload = Body(...)):
+    def register_instrument(
+        payload: PaymentInstrumentPayload = Body(...),
+        current_user: Dict[str, Any] = Depends(auth_dependency()),
+    ):
         instrument = PaymentInstrument(
             instrument_id=str(uuid.uuid4()),
             person_id=payload.person_id,
@@ -77,7 +81,10 @@ def register_payment_routes(app, *, context_client=None, storage_client=None) ->
         return {"ok": True, "instrument": registered.__dict__}
 
     @api.post("/payments/transactions")
-    def create_transaction(payload: PaymentTransactionPayload = Body(...)):
+    def create_transaction(
+        payload: PaymentTransactionPayload = Body(...),
+        current_user: Dict[str, Any] = Depends(auth_dependency()),
+    ):
         if _require_payment_approval and not payload.authorization_context.get("approved"):
             raise HTTPException(status_code=403, detail="payment requires explicit approval")
         request = PaymentTransactionRequest(
@@ -94,7 +101,7 @@ def register_payment_routes(app, *, context_client=None, storage_client=None) ->
         return {"ok": True, "transaction": txn.__dict__}
 
     @api.get("/payments/transactions/{txn_id}")
-    def get_transaction_status(txn_id: str):
+    def get_transaction_status(txn_id: str, current_user: Dict[str, Any] = Depends(auth_dependency())):
         try:
             txn = service.get_transaction_status(txn_id)
         except KeyError:
