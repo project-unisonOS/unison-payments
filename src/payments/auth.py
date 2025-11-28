@@ -2,23 +2,33 @@ from __future__ import annotations
 
 import os
 from typing import Dict, Any
-from fastapi import Depends, HTTPException
-from unison_common.auth import BatonAuth
+from fastapi import Depends, HTTPException, Header
+from jose import jwt, JWTError
 
 
-def _load_auth() -> BatonAuth:
+def _decode_token(token: str) -> Dict[str, Any]:
     secret = os.getenv("UNISON_AUTH_SECRET")
     issuer = os.getenv("UNISON_AUTH_ISSUER", "unison-auth")
     audience = os.getenv("UNISON_AUTH_AUDIENCE", "unison-internal")
     if not secret:
         raise RuntimeError("UNISON_AUTH_SECRET is required for payments auth")
-    return BatonAuth(secret_key=secret, issuer=issuer, audience=audience)
+    return jwt.decode(token, secret, algorithms=["HS256"], issuer=issuer, audience=audience)
 
 
 def auth_dependency():
-    baton_auth = _load_auth()
+    if os.getenv("DISABLE_AUTH_FOR_TESTS", "false").lower() == "true":
+        async def _test_user():
+            return {"username": "test-user", "roles": ["admin"], "baton": "test-baton"}
 
-    def _dep(token: Dict[str, Any] = Depends(baton_auth)):
-        return token
+        return _test_user
+
+    async def _dep(authorization: str = Header(None)):
+        if not authorization or not isinstance(authorization, str) or not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="missing or invalid auth")
+        token = authorization.split(" ", 1)[1]
+        try:
+            return _decode_token(token)
+        except JWTError:
+            raise HTTPException(status_code=401, detail="invalid token")
 
     return _dep
