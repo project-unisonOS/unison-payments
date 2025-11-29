@@ -22,6 +22,7 @@ uvicorn payments.server:app --reload --port 8089
 - `UNISON_REQUIRE_PAYMENT_APPROVAL` (default `true`)
 - `UNISON_AUTH_SECRET`, `UNISON_AUTH_ISSUER`, `UNISON_AUTH_AUDIENCE` (required for auth on endpoints)
 - `UNISON_CONTEXT_HOST`/`UNISON_CONTEXT_PORT` and `UNISON_STORAGE_HOST`/`UNISON_STORAGE_PORT` for wiring real clients.
+- `DISABLE_AUTH_FOR_TESTS` (set to `true` in devstack/testing to bypass JWTs; disabled in prod).
 
 ## Tests
 
