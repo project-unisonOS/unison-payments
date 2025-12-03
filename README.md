@@ -35,3 +35,7 @@ python -m pytest
 - Implement real provider plugins (Stripe/Adyen/etc.) with webhook signature verification.
 - Wire context/storage clients for metadata and vault storage.
 - Update `unison-devstack` to include this service and proxy orchestrator payments routes to it.
+
+## Docs
+
+Full docs at https://project-unisonos.github.io
